@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <title></title>
+  <link rel="stylesheet" type="text/css" href="./css/style.css" />
+  <script type="text/javascript" src="./js/jquery.js"></script>
+  <script type="text/javascript" src="./js/tool.js"></script>
+</head>
+<body>
+  <div id="titleBar" class="topBar">
+    <div class="topText">XML生成器</div>
+    <div class="closeButton">
+      <img id="closeButton" src="./img/close.png"/>
+    </div>
+  </div>
+  <div style="margin-top: 32px;">
+    <table>
+      <tr>
+        <td>MYSQL数据库主机</td>
+        <td><input type="text" name="host" id="host"></td>
+      </tr>
+      <tr>
+        <td>MYSQL数据库端口</td>
+        <td><input type="text" name="port" id="port"></td>
+      </tr>
+      <tr>
+        <td>MYSQL数据库账号</td>
+        <td><input type="text" name="user" id="user"></td>
+      </tr>
+      <tr>
+        <td>MYSQL数据库密码</td>
+        <td><input type="password" name="passwd" id="passwd"></td>
+      </tr>
+      <tr>
+        <td>MYSQL数据库库名</td>
+        <td><input type="text" name="dbname" id="dbname"></td>
+      </tr>
+      <tr>
+        <td>XML输出目录</td>
+        <td>
+          <a class="btn btn-primary" onclick="$('input[id=xml-path]').click()">选择目录</a>
+          <input id="xml-path" onchange="loadXmlPath()" style="display:none" type="file" nwdirectory>
+          <input type="hidden" name="excel" id="xml">
+        </td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><input id="execButton" type="button" value="开始执行" onclick="execTool()"></td>
+      </tr>
+    </table>
+    <div id="errMsg" class="errMsg">
+    </div>
+    <div id="msg" class="msg">
+    </div>
+  </div>
+</body>
+</html>
