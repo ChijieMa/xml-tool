@@ -12,7 +12,8 @@ var async = require('async');
 var path = require('path');
 var xmlBuilder = require('xmlbuilder');
 var configFile = path.join(path.dirname(process.execPath), 'config.json');
-var connection, prefix;
+var connection, prefix, host, port, user, passwd, dbname, xml;
+var checkedArr = [];
 
 var loadXmlPath = function() {
   var xmlPath = $("#xml-path")[0].files[0].path;
@@ -39,13 +40,14 @@ function msg(type, msg) {
   }
 }
 
-var execTool = function() {
-  var host = $("#host").val();
-  var port = $("#port").val();
-  var user = $("#user").val();
-  var passwd = $("#passwd").val();
-  var dbname = $("#dbname").val();
-  var xml = $("#xml").val();
+function checkInput(opt) {
+  opt = opt || {};
+  host = $("#host").val();
+  port = $("#port").val();
+  user = $("#user").val();
+  passwd = $("#passwd").val();
+  dbname = $("#dbname").val();
+  xml = $("#xml").val();
   $("#errMsg").html('');
   $("#msg").html('');
   if (host.length <= 0) {
@@ -68,21 +70,33 @@ var execTool = function() {
     msg(1, "MYSQL数据库库名不能为空!");
     return false;
   }
-  if (xml.length <= 0) {
+  if (!opt.xml && xml.length <= 0) {
     msg(1, "请先指定XML输出目录!");
     return false;
   }
 
-  if (!fs.existsSync(xml)) {
+  if (!opt.xml && !fs.existsSync(xml)) {
     msg(1, "XML输出目录不存在！");
     return false;
   }
 
-  if (!fs.statSync(xml).isDirectory()) {
+  if (!opt.xml && !fs.statSync(xml).isDirectory()) {
     msg(1, "XML输出目录不是目录！");
     return false;
   }
+  return true;
+}
 
+function checkedList() {
+  checkedArr = [];
+  $("#tbs :checkbox").each(function() {
+    if ($(this).is(":checked")) {
+      checkedArr.push($(this).val());
+    }
+  });
+}
+
+function connectDb() {
   connection = mysql.createConnection({
     host: host,
     port: port,
@@ -90,6 +104,15 @@ var execTool = function() {
     password: passwd,
     database: dbname
   });
+}
+
+var execTool = function() {
+  if (!checkInput()) {
+    return false;
+  }
+
+  checkedList();
+  connectDb();
 
   async.waterfall([
     function(cb) {
@@ -114,6 +137,12 @@ var execTool = function() {
           callback(null);
           return;
         }
+
+        if (checkedArr.length > 0 && checkedArr.indexOf(tblName) === -1) {
+          callback(null);
+          return;
+        }
+
         var sqlArr = [
           "select COLUMN_NAME,COLUMN_COMMENT from information_schema.columns where" +
           " table_schema='" + dbname + "' and table_name='" + tblName + "' order by ORDINAL_POSITION asc",
@@ -187,6 +216,56 @@ var execTool = function() {
   });
 };
 
+function updateTab() {
+  if (!checkInput({xml: true})) {
+    return false;
+  }
+
+  connectDb();
+
+  var tabArr = [];
+
+  async.waterfall([
+    function(cb) {
+      $("#updateTab").attr('disabled', 'true');
+      connection.connect(cb);
+    },
+    function(conInfo, cb) {
+      var sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA='" + dbname + "'";
+      connection.query(sql, function(err, rows) {
+        if (err) {
+          cb(err);
+          return;
+        }
+        cb(null, rows);
+      });
+    },
+    function (tbls, cb) {
+      async.each(tbls, function(tbl, callback) {
+        var tblName = tbl.TABLE_NAME;
+        if (prefix && tblName.indexOf(prefix) !== 0) {
+          callback(null);
+          return;
+        }
+        tabArr.push(tblName);
+        callback(null);
+      }, cb);
+    }
+  ], function(err) {
+    connection.end();
+    $("#updateTab").removeAttr('disabled');
+    if (err) {
+      $("#tbs").html(err);
+      return;
+    }
+    var tbsHtml = '';
+    tabArr.forEach(function(tab) {
+      tbsHtml += "<p><input type='checkbox'value='" + tab + "'>" + tab + "</p>";
+    });
+    $('#tbs').html(tbsHtml);
+  });
+}
+
 $(document).ready(function(){
   $("#closeButton").mouseover(function() {
     $(this).attr("src","./img/close_hover.png");
@@ -208,6 +287,7 @@ $(document).ready(function(){
     $('#passwd').val(config.passwd);
     $('#dbname').val(config.dbname);
     prefix = config.prefix;
+    updateTab();
   }
 
   win.show();

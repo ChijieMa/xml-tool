@@ -15,6 +15,8 @@
     </div>
   </div>
   <div style="margin-top: 32px;">
+    <div>
+      <div style="float: left; width: 400px;">
     <table>
       <tr>
         <td>MYSQL数据库主机</td>
@@ -49,6 +51,17 @@
         <td><input id="execButton" type="button" value="开始执行" onclick="execTool()"></td>
       </tr>
     </table>
+      </div>
+      <div style="float: left; width: 380px;">
+        <p>数据表 <input id="updateTab" type="button" value="更新数据表" onclick="updateTab()"></p>
+        <div style="width: 380px; height: 175px; border: 1px solid #ccc; overflow: hidden;">
+          <div id="tbs" style="width: 385px; height: 175px; overflow: auto; overflow-x: hidden;">
+
+          </div>
+        </div>
+      </div>
+      <div style="clear: left;"></div>
+    </div>
     <div id="errMsg" class="errMsg">
     </div>
     <div id="msg" class="msg">
